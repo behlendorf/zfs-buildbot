@@ -98,6 +98,14 @@ EOF
     ;;
 esac
 
+#cat << EOF >> $TEST_FILE
+#TEST_ZTEST_SKIP="yes"
+#TEST_ZIMPORT_SKIP="yes"
+#TEST_XFSTESTS_SKIP="yes"
+#TEST_ZFSTESTS_SKIP="yes"
+#TEST_ZFSSTRESS_SKIP="no"
+#EOF
+
 . $TEST_FILE
 
 # Start the Linux kernel watchdog so the system will panic in the case of a
