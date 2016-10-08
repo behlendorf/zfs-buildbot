@@ -25,7 +25,7 @@ fi
 # calls us.  If they are not there, we set some defaults but they almost
 # certainly will not work.
 if test ! "$BB_MASTER"; then
-    BB_MASTER="build.zfsonlinux.org:9989"
+    BB_MASTER="build-dev.zfsonlinux.org:9989"
 fi
 if test ! "$BB_NAME"; then
     BB_NAME=$(hostname)
