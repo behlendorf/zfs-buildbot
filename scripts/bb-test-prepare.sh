@@ -66,7 +66,7 @@ EOF
 # Add environment variables for "packages" or "in-tree" testing.
 TEST_METHOD=${TEST_METHOD:-"packages"}
 case "$TEST_METHOD" in
-packages|kmod|pkg-kmod|dkms|dkms-kmod)
+packages|kmod|kmod-kabi|pkg-kmod|dkms|dkms-kmod)
     cat << EOF >> $TEST_FILE
 SPLAT=${SPLAT:-"splat"}
 ZPOOL=${ZPOOL:-"zpool"}

@@ -52,9 +52,9 @@ Amazon*)
 
 CentOS*)
     # Required repository packages
-    if cat /etc/centos-release | grep -Eq "6."; then
+    if cat /etc/centos-release | grep -Eq "release 6."; then
         sudo -E yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
-    elif cat /etc/centos-release | grep -Eq "7."; then
+    elif cat /etc/centos-release | grep -Eq "release 7."; then
         sudo -E yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     else
         echo "No extra repo packages to install..."
@@ -69,7 +69,7 @@ CentOS*)
     # Required utilities.
     sudo -E yum -y install git rpm-build wget curl bc fio acl sysstat \
         mdadm lsscsi parted attr dbench watchdog ksh nfs-utils samba \
-        rng-tools dkms
+        rng-tools
 
     # Required development libraries
     sudo -E yum -y install kernel-devel \
@@ -79,12 +79,12 @@ CentOS*)
         libaio-devel python-setuptools python-cffi libyaml-devel
 
     # Packages that are version dependent and not always available
-    if cat /etc/centos-release | grep -Fq 7.; then
+    if cat /etc/centos-release | grep -Fq "release 7."; then
         sudo -E yum -y install libasan
     fi
 
     # Testing support libraries and tools
-    sudo -E yum -y install --enablerepo=epel fio \
+    sudo -E yum -y install --enablerepo=epel fio dkms \
         python36 python36-devel python36-setuptools python36-cffi
     ;;
 

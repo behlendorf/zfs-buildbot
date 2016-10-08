@@ -25,7 +25,7 @@ fi
 # calls us.  If they are not there, we set some defaults but they almost
 # certainly will not work.
 if test ! "$BB_MASTER"; then
-    BB_MASTER="build.zfsonlinux.org:9989"
+    BB_MASTER="build-dev.zfsonlinux.org:9989"
 fi
 if test ! "$BB_NAME"; then
     BB_NAME=$(hostname)
@@ -56,6 +56,8 @@ if test ! -f /etc/buildslave; then
     echo "BB_MODE=\"$BB_MODE\""         >> /etc/buildslave
     echo "BB_ADMIN=\"$BB_ADMIN\""       >> /etc/buildslave
     echo "BB_DIR=\"$BB_DIR\""           >> /etc/buildslave
+    echo "BB_RUNURL=\"$BB_RUNURL\""     >> /etc/buildslave
+    echo "BB_WEBURL=\"$BB_WEBURL\""     >> /etc/buildslave
     echo "BB_SHUTDOWN=\"Yes\""          >> /etc/buildslave
 fi
 
@@ -154,10 +156,10 @@ Amazon*)
 
 CentOS*)
     # Required repository packages
-    if cat /etc/centos-release | grep -Eq "6."; then
-        sudo -E yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
-    elif cat /etc/centos-release | grep -Eq "7."; then
-        sudo -E yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    if cat /etc/centos-release | grep -Eq "release 6."; then
+        yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+    elif cat /etc/centos-release | grep -Eq "release 7."; then
+        yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     else
         echo "No extra repo packages to install..."
     fi
@@ -208,6 +210,11 @@ CentOS*)
 
     # Standardize ephemeral storage so it's available under /mnt.
     # This is the default.
+
+    # Install the mock package and add the buildbot user to the mock group.
+    # This must be done before the build slave is started.
+    yum --enablerepo=epel -y install mock
+    usermod -a -G mock buildbot
     ;;
 
 Debian*)
@@ -261,7 +268,7 @@ Fedora*)
     # slower to bootstrap.  By default prefer the packaged version.
     if test $BB_USE_PIP -ne 0; then
         dnf -y install gcc python-pip python-devel
-        pip --quiet install buildbot-slave
+        pip install buildbot-slave
         BUILDSLAVE="/usr/bin/buildslave"
     else
         dnf -y install buildbot-slave
@@ -302,6 +309,11 @@ Fedora*)
 
     # Standardize ephemeral storage so it's available under /mnt.
     # This is the default.
+
+    # Install the mock package and add the buildbot user to the mock group.
+    # This must be done before the build slave is started.
+    dnf -y install mock
+    usermod -a -G mock buildbot
     ;;
 
 Gentoo*)
@@ -351,6 +363,11 @@ RHEL*)
 
     # Standardize ephemeral storage so it's available under /mnt.
     # This is the default.
+
+    # Install the mock package and add the buildbot user to the mock group.
+    # This must be done before the build slave is started.
+    yum --enablerepo=epel -y install mock
+    usermod -a -G mock buildbot
     ;;
 
 SUSE*)
@@ -458,5 +475,5 @@ if test "$BB_MODE" = "BUILD" -o "$BB_MODE" = "STYLE"; then
 else
     echo "@reboot sudo -E -u buildbot $BUILDSLAVE start $BB_DIR" | crontab -
     crontab -l
-    sudo -E reboot
+    reboot
 fi

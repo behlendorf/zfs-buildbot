@@ -99,21 +99,23 @@ export BB_MASTER='%s'
 export BB_NAME='%s'
 export BB_PASSWORD='%s'
 export BB_MODE='%s'
-export BB_URL='%s'
+export BB_RUNURL='%s'
+export BB_WEBURL='%s'
 
 # Get the runurl utility.
-wget -qO/usr/bin/runurl $BB_URL/runurl
+wget -qO/usr/bin/runurl ${BB_RUNURL}runurl
 chmod 755 /usr/bin/runurl
 
-runurl $BB_URL/bb-bootstrap.sh
+runurl ${BB_RUNURL}bb-bootstrap.sh
 """
 
     @staticmethod
     def pass_generator(size=24, chars=string.ascii_uppercase + string.digits):                                         
         return ''.join(random.choice(chars) for _ in range(size))
 
-    def __init__(self, name, password=None, master='', url='', mode="BUILD",
-                instance_type="m3.large", identifier=ec2_default_access,
+    def __init__(self, name, password=None, master='', runurl='', weburl='',
+                mode="BUILD", instance_type="m3.large",
+                identifier=ec2_default_access,
                 secret_identifier=ec2_default_secret,
                 keypair_name=ec2_default_keypair_name, security_name='ZFSBuilder',
                 subnet_id=None, security_group_ids=None,
@@ -129,7 +131,7 @@ runurl $BB_URL/bb-bootstrap.sh
         if not tags or tags is None:
             tags={
                 "ENV"      : "DEV",
-                "Name"     : "ZFSBuilder",
+                "Name"     : "ZFSBuilder Packages",
                 "ORG"      : "COMP",
                 "OWNER"    : "behlendorf1",
                 "PLATFORM" : self.name,
@@ -137,16 +139,19 @@ runurl $BB_URL/bb-bootstrap.sh
             }
 
         if master in (None, ''):
-            master = "build.zfsonlinux.org:9989"
+            master = "52.53.197.194:9989"
 
-        if url in (None, ''):
-            url = "https://raw.githubusercontent.com/zfsonlinux/zfs-buildbot/master/scripts/" 
+        if runurl in (None, ''):
+            runurl = "http://52.53.197.194/scripts/"
+
+        if weburl in (None, ''):
+            weburl = "http://52.53.197.194"
 
         if password is None:
             password = ZFSEC2Slave.pass_generator()
 
         if user_data is None:
-            user_data = ZFSEC2Slave.default_user_data % (bin_path, master, name, password, mode, url)
+            user_data = ZFSEC2Slave.default_user_data % (bin_path, master, name, password, mode, runurl, weburl)
 
         if block_device_map is None:
             # io1 is 50 IOPS/GB, iops _must_ be specified for io1 only
@@ -188,36 +193,9 @@ runurl $BB_URL/bb-bootstrap.sh
             build_wait_timeout=build_wait_timeout, missing_timeout=missing_timeout,
             placement=placement, block_device_map=block_device_map, **kwargs)
 
-class ZFSEC2StyleSlave(ZFSEC2Slave):
-    def __init__(self, name, **kwargs):
-        ZFSEC2Slave.__init__(self, name, mode="STYLE",
-            instance_type="m3.large", max_spot_price=0.10, placement='a',
-            spot_instance=True, **kwargs)
-
-# Create an HVM EC2 large latent build slave
-class ZFSEC2BuildSlave(ZFSEC2Slave):
-    def __init__(self, name, **kwargs):
-        ZFSEC2Slave.__init__(self, name, mode="BUILD",
-            instance_type="m3.large", max_spot_price=0.10, placement='a',
-            spot_instance=True, **kwargs)
-
-# Create a PV (paravirtual) EC2 latent build slave
-class ZFSEC2PVSlave(ZFSEC2Slave):
-    def __init__(self, name, **kwargs):
-        ZFSEC2Slave.__init__(self, name, mode="BUILD",
-            instance_type="m1.medium", max_spot_price=0.20, placement='a',
-            spot_instance=True, **kwargs)
-
 # Create an HVM EC2 latent test slave 
-class ZFSEC2TestSlave(ZFSEC2Slave):
+class ZFSEC2PkgSlave(ZFSEC2Slave):
     def __init__(self, name, **kwargs):
         ZFSEC2Slave.__init__(self, name, build_wait_timeout=1, mode="TEST",
             instance_type="m3.large", max_spot_price=0.10, placement='a',
-            spot_instance=True, **kwargs)
-
-# Create a d2.xlarge slave for performance testing because they have disks
-class ZFSEC2PerfTestSlave(ZFSEC2Slave):
-    def __init__(self, name, **kwargs):
-        ZFSEC2Slave.__init__(self, name, build_wait_timeout=1, mode="PERF",
-            instance_type="d2.xlarge", max_spot_price=0.60, placement='a',
             spot_instance=True, **kwargs)
