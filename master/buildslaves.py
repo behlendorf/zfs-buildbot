@@ -102,10 +102,10 @@ export BB_MODE='%s'
 export BB_URL='%s'
 
 # Get the runurl utility.
-wget -qO/usr/bin/runurl $BB_URL/runurl
+wget -qO/usr/bin/runurl ${BB_URL}runurl
 chmod 755 /usr/bin/runurl
 
-runurl $BB_URL/bb-bootstrap.sh
+runurl ${BB_URL}bb-bootstrap.sh
 """
 
     @staticmethod
@@ -129,7 +129,7 @@ runurl $BB_URL/bb-bootstrap.sh
         if not tags or tags is None:
             tags={
                 "ENV"      : "DEV",
-                "Name"     : "ZFSBuilder",
+                "Name"     : "ZFSBuilder Dev",
                 "ORG"      : "COMP",
                 "OWNER"    : "behlendorf1",
                 "PLATFORM" : self.name,
@@ -137,10 +137,10 @@ runurl $BB_URL/bb-bootstrap.sh
             }
 
         if master in (None, ''):
-            master = "build.zfsonlinux.org:9989"
+            master = "build-dev.zfsonlinux.org:9989"
 
         if url in (None, ''):
-            url = "https://raw.githubusercontent.com/zfsonlinux/zfs-buildbot/master/scripts/" 
+            url = "http://build-dev.zfsonlinux.org/scripts/"
 
         if password is None:
             password = ZFSEC2Slave.pass_generator()
