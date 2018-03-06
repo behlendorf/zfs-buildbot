@@ -62,6 +62,10 @@ fi
 BB_PARAMS="${BB_DIR} ${BB_MASTER} ${BB_NAME} ${BB_PASSWORD}"
 echo "$0: BB_PARAMS is now $BB_PARAMS"
 
+BB_CMD="/usr/bin/buildslave"
+BB_SUBCMD_START="start"
+BB_SUBCMD_CREATE="create-slave"
+
 # Magic IP address from where to obtain EC2 metadata
 METAIP="169.254.169.254"
 METAROOT="http://${METAIP}/latest"
@@ -104,9 +108,9 @@ Amazon*)
     easy_install --quiet buildbot-slave
 
     if cat /etc/os-release | grep -Eq "Amazon Linux 2"; then
-        BUILDSLAVE="/usr/bin/buildslave"
+        BB_CMD="/usr/bin/buildslave"
     else
-        BUILDSLAVE="/usr/local/bin/buildslave"
+        BB_CMD="/usr/local/bin/buildslave"
     fi
 
     # Install the latest kernel to reboot on to.
@@ -143,14 +147,14 @@ Amazon*)
 CentOS*)
     if cat /etc/redhat-release | grep -Eq "6."; then
         # The buildbot-slave package isn't available from a common repo.
-        BUILDSLAVE_URL="http://build.zfsonlinux.org"
-        BUILDSLAVE_RPM="buildbot-slave-0.8.8-2.el6.noarch.rpm"
-        yum -y install $BUILDSLAVE_URL/$BUILDSLAVE_RPM
-        BUILDSLAVE="/usr/bin/buildslave"
+        BB_CMD_URL="http://build.zfsonlinux.org"
+        BB_CMD_RPM="buildbot-slave-0.8.8-2.el6.noarch.rpm"
+        yum -y install $BB_CMD_URL/$BB_CMD_RPM
+        BB_CMD="/usr/bin/buildslave"
     else
         yum -y install gcc python-pip python-devel
         easy_install --quiet buildbot-slave
-        BUILDSLAVE="/usr/bin/buildslave"
+        BB_CMD="/usr/bin/buildslave"
     fi
 
     # Install the latest kernel to reboot on to.
@@ -185,10 +189,10 @@ Debian*)
     if test $BB_USE_PIP -ne 0; then
         apt-get --yes install gcc curl python-pip python-dev
         pip --quiet install buildbot-slave
-        BUILDSLAVE="/usr/local/bin/buildslave"
+        BB_CMD="/usr/local/bin/buildslave"
     else
         apt-get --yes install curl buildbot-slave
-        BUILDSLAVE="/usr/bin/buildslave"
+        BB_CMD="/usr/bin/buildslave"
     fi
 
     # Install the latest kernel to reboot on to.
@@ -210,15 +214,22 @@ Debian*)
     ;;
 
 Fedora*)
+    VERSION=$(cut -f3 -d' ' /etc/fedora-release)
+
     # Relying on the pip version of the buildslave is more portable but
     # slower to bootstrap.  By default prefer the packaged version.
     if test $BB_USE_PIP -ne 0; then
         dnf -y install gcc python-pip python-devel
         easy_install --quiet buildbot-slave
-        BUILDSLAVE="/usr/bin/buildslave"
-    else
+        BB_CMD="/usr/bin/buildslave"
+    elif test $VERSION -le 28; then
         dnf -y install buildbot-slave
-        BUILDSLAVE="/usr/bin/buildslave"
+        BB_CMD="/usr/bin/buildslave"
+    else
+        dnf -y install buildbot-worker
+        BB_CMD="/usr/bin/buildbot-worker"
+        BB_SUBCMD_START="start"
+        BB_SUBCMD_CREATE="create-worker"
     fi
 
     # Install the latest kernel to reboot on to.
@@ -242,7 +253,7 @@ Fedora*)
 Gentoo*)
     emerge-webrsync
     emerge app-admin/sudo dev-util/buildbot-slave
-    BUILDSLAVE="/usr/bin/buildslave"
+    BB_CMD="/usr/bin/buildslave"
 
     # User buildbot needs to be added to sudoers and requiretty disabled.
     echo "buildbot  ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -251,7 +262,7 @@ Gentoo*)
 RHEL*)
     yum -y install deltarpm gcc python-pip python-devel
     easy_install --quiet buildbot-slave
-    BUILDSLAVE="/usr/bin/buildslave"
+    BB_CMD="/usr/bin/buildslave"
 
     # Install the latest kernel to reboot on to.
     if test "$BB_MODE" = "TEST" -o "$BB_MODE" = "PERF"; then
@@ -285,7 +296,7 @@ SUSE*)
     # Zypper auto-refreshes on boot retry to avoid spurious failures.
     zypper --non-interactive install gcc python-devel python-pip
     easy_install --quiet buildbot-slave
-    BUILDSLAVE="/usr/bin/buildslave"
+    BB_CMD="/usr/bin/buildslave"
 
     # User buildbot needs to be added to sudoers and requiretty disabled.
     if ! id -u buildbot >/dev/null 2>&1; then
@@ -306,10 +317,10 @@ Ubuntu*)
     # slower to bootstrap.  By default prefer the packaged version.
     if test $BB_USE_PIP -ne 0; then
         pip --quiet install buildbot-slave
-        BUILDSLAVE="/usr/local/bin/buildslave"
+        BB_CMD="/usr/local/bin/buildslave"
     else
         apt-get --yes install buildbot-slave
-        BUILDSLAVE="/usr/bin/buildslave"
+        BB_CMD="/usr/bin/buildslave"
     fi
 
     # Install the latest kernel to reboot on to.
@@ -346,7 +357,8 @@ set +x
 if test ! -d $BB_DIR; then
     mkdir -p $BB_DIR
     chown buildbot.buildbot $BB_DIR
-    sudo -E -u buildbot $BUILDSLAVE create-slave --umask=022 --usepty=0 $BB_PARAMS
+    sudo -E -u buildbot $BB_CMD $BB_SUBCMD_CREATE \
+        --umask=022 --usepty=0 $BB_PARAMS
 fi
 
 # Extract some of the EC2 meta-data and make it visible in the buildslave
@@ -370,9 +382,9 @@ set -x
 # slave joining your farm.  You can then manage the rest of the work from the
 # buildbot master.
 if test "$BB_MODE" = "BUILD" -o "$BB_MODE" = "STYLE"; then
-    sudo -E -u buildbot $BUILDSLAVE start $BB_DIR
+    sudo -E -u buildbot $BB_CMD start $BB_DIR
 else
-    echo "@reboot sudo -E -u buildbot $BUILDSLAVE start $BB_DIR" | crontab
+    echo "@reboot sudo -E -u buildbot $BB_CMD $BB_SUBCMD_START $BB_DIR" | crontab
     crontab -l
     sudo -E reboot
 fi
