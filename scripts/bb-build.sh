@@ -27,30 +27,36 @@ set -x
 sh ./autogen.sh >>$CONFIG_LOG 2>&1 || exit 1
 
 case "$INSTALL_METHOD" in
-packages|kmod|pkg-kmod|dkms|dkms-kmod)
+packages|kmod|kmod-kabi|pkg-kmod|dkms|dkms-kmod)
 
 	./configure $CONFIG_OPTIONS $LINUX_OPTIONS >>$CONFIG_LOG 2>&1 || exit 1
 
 	case "$INSTALL_METHOD" in
 	packages|kmod|pkg-kmod)
 		make $MAKE_TARGETS_KMOD >>$MAKE_LOG 2>&1 || exit 1
+		TYPE="kmod"
+		;;
+	kmod-kabi)
+		make $MAKE_TARGETS_KMOD >>$MAKE_LOG 2>&1 || exit 1
+		TYPE="kmod-kabi"
 		;;
 	dkms|pkg-dkms)
 		make $MAKE_TARGETS_DKMS >>$MAKE_LOG 2>&1 || exit 1
+		TYPE="dkms"
 		;;
 	esac
-
-	sudo -E rm *.src.rpm
 
 	# Preserve TEST and PERF packages which may be needed to investigate
 	# test failures.  BUILD packages are discarded.
 	if test "$BB_MODE" = "TEST" -o "$BB_MODE" = "PERF"; then
 		if test -n "$UPLOAD_DIR"; then
 			BUILDER="$(echo $BB_NAME | cut -f1-3 -d'-')"
-			mkdir -p "$UPLOAD_DIR/$BUILDER/packages"
-			cp *.deb *.rpm $UPLOAD_DIR/$BUILDER/packages
+			mkdir -p "$UPLOAD_DIR/$BUILDER/packages/$TYPE"
+			cp *.deb *.rpm "$UPLOAD_DIR/$BUILDER/packages/$TYPE"
 		fi
 	fi
+
+	sudo -E rm *.src.rpm
 
 	case "$BB_NAME" in
 	Amazon*)

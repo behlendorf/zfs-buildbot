@@ -69,7 +69,7 @@ CentOS*)
     # Required utilities.
     sudo -E yum -y install git rpm-build wget curl bc fio acl sysstat \
         mdadm lsscsi parted attr dbench watchdog ksh nfs-utils samba \
-        rng-tools dkms
+        rng-tools
 
     # Required development libraries
     sudo -E yum -y install kernel-devel \
@@ -84,7 +84,7 @@ CentOS*)
     fi
 
     # Testing support libraries and tools
-    sudo -E yum -y install --enablerepo=epel python34 fio
+    sudo -E yum -y install --enablerepo=epel python34 fio dkms
     ;;
 
 Debian*)

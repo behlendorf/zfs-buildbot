@@ -120,6 +120,13 @@ class CustomGitHubEventHandler(GitHubEventHandler):
             props['perfpts'] = json.dumps("yes")
             props['perfzts'] = json.dumps("yes")
 
+            # Enabled functional testing on pushed by default.
+            props['testztest'] = json.dumps("yes")
+            props['testzimport'] = json.dumps("yes")
+            props['testxfstests'] = json.dumps("yes")
+            props['testzfstests'] = json.dumps("yes")
+            props['testzfsstress'] = json.dumps("yes")
+
             change = {
                 'revision' : commit['id'],
                 'when_timestamp': created_at,
@@ -238,6 +245,13 @@ class CustomGitHubEventHandler(GitHubEventHandler):
             # Disabled performance testing on PRs by default.
             props['perfpts'] = json.dumps("no")
             props['perfzts'] = json.dumps("no")
+
+            # Enabled functional testing on pushed by default.
+            props['testztest'] = json.dumps("yes")
+            props['testzimport'] = json.dumps("yes")
+            props['testxfstests'] = json.dumps("yes")
+            props['testzfstests'] = json.dumps("yes")
+            props['testzfsstress'] = json.dumps("yes")
 
             change = {
                 'revision' : commit['sha'],
