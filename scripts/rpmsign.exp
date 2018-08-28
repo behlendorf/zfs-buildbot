@@ -1,0 +1,15 @@
+#!/usr/bin/expect -f
+#
+# Sign RPMs by sending the passphrase stored in the users
+# home directory as ~/.rpmpassphrase.
+#
+set fp [open ~/.rpmpassphrase r]
+set passphrase [read -nonewline $fp]
+close $fp
+
+spawn rpmsign --addsign {*}$argv
+expect {
+    "*Enter pass phrase: " { send -- "$passphrase\n" }
+    "* Passphrase: "       { send -- "$passphrase\n" }
+}
+expect eof

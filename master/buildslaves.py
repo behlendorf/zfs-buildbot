@@ -99,21 +99,23 @@ export BB_MASTER='%s'
 export BB_NAME='%s'
 export BB_PASSWORD='%s'
 export BB_MODE='%s'
-export BB_URL='%s'
+export BB_RUNURL='%s'
+export BB_WEBURL='%s'
 
 # Get the runurl utility.
-wget -qO/usr/bin/runurl ${BB_URL}runurl
+wget -qO/usr/bin/runurl ${BB_RUNURL}runurl
 chmod 755 /usr/bin/runurl
 
-runurl ${BB_URL}bb-bootstrap.sh
+runurl ${BB_RUNURL}bb-bootstrap.sh
 """
 
     @staticmethod
     def pass_generator(size=24, chars=string.ascii_uppercase + string.digits):                                         
         return ''.join(random.choice(chars) for _ in range(size))
 
-    def __init__(self, name, password=None, master='', url='', mode="BUILD",
-                instance_type="m3.large", identifier=ec2_default_access,
+    def __init__(self, name, password=None, master='', runurl='', weburl='',
+                mode="BUILD", instance_type="m3.large",
+                identifier=ec2_default_access,
                 secret_identifier=ec2_default_secret,
                 keypair_name=ec2_default_keypair_name, security_name='ZFSBuilder',
                 subnet_id=None, security_group_ids=None,
@@ -139,14 +141,17 @@ runurl ${BB_URL}bb-bootstrap.sh
         if master in (None, ''):
             master = "build-dev.zfsonlinux.org:9989"
 
-        if url in (None, ''):
-            url = "http://build-dev.zfsonlinux.org/scripts/"
+        if runurl in (None, ''):
+            runurl = "http://build-dev.zfsonlinux.org/scripts/"
+
+        if weburl in (None, ''):
+            weburl = "http://build-dev.zfsonlinux.org"
 
         if password is None:
             password = ZFSEC2Slave.pass_generator()
 
         if user_data is None:
-            user_data = ZFSEC2Slave.default_user_data % (bin_path, master, name, password, mode, url)
+            user_data = ZFSEC2Slave.default_user_data % (bin_path, master, name, password, mode, runurl, weburl)
 
         if block_device_map is None:
             # io1 is 50 IOPS/GB, iops _must_ be specified for io1 only

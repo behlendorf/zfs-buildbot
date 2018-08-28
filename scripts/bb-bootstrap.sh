@@ -56,6 +56,8 @@ if test ! -f /etc/buildslave; then
     echo "BB_MODE=\"$BB_MODE\""         >> /etc/buildslave
     echo "BB_ADMIN=\"$BB_ADMIN\""       >> /etc/buildslave
     echo "BB_DIR=\"$BB_DIR\""           >> /etc/buildslave
+    echo "BB_RUNURL=\"$BB_RUNURL\""     >> /etc/buildslave
+    echo "BB_WEBURL=\"$BB_WEBURL\""     >> /etc/buildslave
     echo "BB_SHUTDOWN=\"Yes\""          >> /etc/buildslave
 fi
 
@@ -208,6 +210,11 @@ CentOS*)
 
     # Standardize ephemeral storage so it's available under /mnt.
     # This is the default.
+
+    # Install the mock package and add the buildbot user to the mock group.
+    # This must be done before the build slave is started.
+    yum --enablerepo=epel -y install mock
+    usermod -a -G mock buildbot
     ;;
 
 Debian*)
@@ -261,7 +268,7 @@ Fedora*)
     # slower to bootstrap.  By default prefer the packaged version.
     if test $BB_USE_PIP -ne 0; then
         dnf -y install gcc python-pip python-devel
-        pip --quiet install buildbot-slave
+        pip install buildbot-slave
         BUILDSLAVE="/usr/bin/buildslave"
     else
         dnf -y install buildbot-slave
@@ -295,6 +302,11 @@ Fedora*)
 
     # Standardize ephemeral storage so it's available under /mnt.
     # This is the default.
+
+    # Install the mock package and add the buildbot user to the mock group.
+    # This must be done before the build slave is started.
+    dnf -y install mock
+    usermod -a -G mock buildbot
     ;;
 
 Gentoo*)
@@ -344,6 +356,11 @@ RHEL*)
 
     # Standardize ephemeral storage so it's available under /mnt.
     # This is the default.
+
+    # Install the mock package and add the buildbot user to the mock group.
+    # This must be done before the build slave is started.
+    yum --enablerepo=epel -y install mock
+    usermod -a -G mock buildbot
     ;;
 
 SUSE*)
