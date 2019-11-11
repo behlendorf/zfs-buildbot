@@ -12,8 +12,12 @@ else
 fi
 
 case "$BB_NAME" in
-FreeBSD*) READLINK="readlink"   ;;
-Linux*)   READLINK="readlink -f";;
+FreeBSD*)
+    READLINK="readlink"
+    ;;
+Amazon*|CentOS*|Debian*|Fedora*|RHEL*|SUSE*|Ubuntu*)
+    READLINK="readlink -f"
+    ;;
 esac
 WORKDIR=$($READLINK .)
 GCOV_KERNEL="/sys/kernel/debug/gcov"

@@ -11,8 +11,12 @@ if echo "$TEST_PREPARE_SKIP" | grep -Eiq "^yes$|^on$|^true$|^1$"; then
 fi
 
 case "$BB_NAME" in
-FreeBSD*) READLINK="readlink"   ;;
-Linux*)   READLINK="readlink -f";;
+FreeBSD*)
+    READLINK="readlink"
+    ;;
+Amazon*|CentOS*|Debian*|Fedora*|RHEL*|SUSE*|Ubuntu*)
+    READLINK="readlink -f"
+    ;;
 esac
 SPL_BUILD_DIR=$($READLINK ../spl)
 ZFS_BUILD_DIR=$($READLINK ../zfs)
